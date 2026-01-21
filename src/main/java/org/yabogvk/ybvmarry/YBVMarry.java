@@ -48,7 +48,7 @@ public final class YBVMarry extends JavaPlugin {
 
         this.marriageManager = new MarriageManager(this, database);
         this.cooldownManager = new CooldownManager();
-//
+
         if (!setupEconomy()) {
             getLogger().warning("Vault не найден или экономика не настроена. Банк отключен!");
         } else {
