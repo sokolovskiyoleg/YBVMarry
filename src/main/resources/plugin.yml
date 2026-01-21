@@ -1,0 +1,35 @@
+name: YBVMarry
+version: '1.0'
+author: yabogvk
+main: org.yabogvk.ybvmarry.YBVMarry
+api-version: '1.21'
+description: Продвинутая система свадеб с банком, домом и подарками.
+softdepend: [PlaceholderAPI, Vault]
+
+commands:
+  marry:
+    description: Основная команда плагина YBVMarry
+    usage: /marry
+
+permissions:
+  ybvmarry.user:
+    description: Доступ к базовым командам (/marry send, /marry accept, /marry chat)
+    default: true
+  ybvmarry.home:
+    description: Доступ к командам /marry home и /marry sethome
+    default: true
+  ybvmarry.bank:
+    description: Доступ к общему семейному счету
+    default: true
+  ybvmarry.interact:
+    description: Доступ к командам /marry kiss и /marry gift
+    default: true
+  ybvmarry.color:
+    description: Возможность менять цвет ника пары
+    default: true
+  ybvmarry.symbol:
+    description: Возможность менять иконку пары
+    default: true
+  ybvmarry.admin:
+    description: Полный доступ ко всем функциям и перезагрузке плагина
+    default: op
