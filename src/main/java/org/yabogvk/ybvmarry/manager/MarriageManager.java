@@ -1,10 +1,8 @@
 package org.yabogvk.ybvmarry.manager;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.yabogvk.ybvmarry.YBVMarry;
 import org.yabogvk.ybvmarry.data.Marriage;
-import org.yabogvk.ybvmarry.manager.Database;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +13,7 @@ public class MarriageManager {
 
     private final Map<UUID, Marriage> marriages = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> proposals = new ConcurrentHashMap<>();
+    private final Set<Marriage> marriagesToDelete = ConcurrentHashMap.newKeySet();
 
     public MarriageManager(YBVMarry plugin, Database db) {
         this.plugin = plugin;
@@ -24,6 +23,7 @@ public class MarriageManager {
 
     private void loadAll() {
         marriages.clear();
+        marriagesToDelete.clear();
         for (Marriage m : db.loadMarriages()) {
             marriages.put(m.p1(), m);
             marriages.put(m.p2(), m);
@@ -36,10 +36,15 @@ public class MarriageManager {
                 .distinct()
                 .toList();
 
-        if (toSave.isEmpty()) return;
+        if (!toSave.isEmpty()) {
+            db.saveMarriagesBatch(toSave);
+            toSave.forEach(m -> m.setDirty(false));
+        }
 
-        db.saveMarriagesBatch(toSave);
-        toSave.forEach(m -> m.setDirty(false));
+        if (!marriagesToDelete.isEmpty()) {
+            db.deleteMarriagesBatch(marriagesToDelete);
+            marriagesToDelete.clear();
+        }
     }
 
     public void acceptProposal(UUID p1, UUID p2) {
@@ -90,9 +95,9 @@ public class MarriageManager {
         if (m != null) {
             UUID partner = m.getPartnerOf(player);
             marriages.remove(partner);
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                db.deleteMarriage(m.p1(), m.p2());
-            });
+            if (!m.isDirty()) {
+                marriagesToDelete.add(m);
+            }
         }
     }
 

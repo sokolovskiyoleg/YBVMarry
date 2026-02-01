@@ -146,14 +146,33 @@ public class Database {
         return list;
     }
 
-    public void deleteMarriage(UUID p1, UUID p2) {
-        UUID first = p1.compareTo(p2) < 0 ? p1 : p2;
-        UUID second = p1.compareTo(p2) < 0 ? p2 : p1;
-        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM marriages WHERE player1 = ? AND player2 = ?")) {
-            ps.setString(1, first.toString());
-            ps.setString(2, second.toString());
-            ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+    public void deleteMarriagesBatch(Collection<Marriage> marriages) {
+        if (marriages.isEmpty()) return;
+
+        String sql = "DELETE FROM marriages WHERE player1 = ? AND player2 = ?";
+        try {
+            boolean autoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                for (Marriage m : marriages) {
+                    UUID first = m.p1().compareTo(m.p2()) < 0 ? m.p1() : m.p2();
+                    UUID second = m.p1().compareTo(m.p2()) < 0 ? m.p2() : m.p1();
+                    ps.setString(1, first.toString());
+                    ps.setString(2, second.toString());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                e.printStackTrace();
+            } finally {
+                connection.setAutoCommit(autoCommit);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void close() {
